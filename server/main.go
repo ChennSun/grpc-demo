@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("tcp监听失败")
 	}
-	//
+	// 注册grpc服务
 	s := grpc.NewServer()
 	hello.RegisterHiServer(s, &server{})
 	log.Printf("server listening at %v", l.Addr())
