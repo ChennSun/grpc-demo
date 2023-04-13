@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"hello"
 	"log"
@@ -25,7 +26,25 @@ var (
 func main() {
 	flag.Parse()
 	// health check config
-	serverConfig := fmt.Sprintf(`{"HealthCheckConfig": {"ServiceName": "%s"}}`, healthCheckService)
+	serverConfig := fmt.Sprintf(`{
+    "LoadBalancingPolicy": "%s",
+    "MethodConfig": [
+        {
+            "Name": [{"Service": "%s"}], 
+			"Timeout": "5s",
+            "RetryPolicy": {
+                "MaxAttempts":5, 
+                "InitialBackoff": "0.1s", 
+                "MaxBackoff": "1s", 
+                "BackoffMultiplier": 2.0,
+                "RetryableStatusCodes": ["UNAVAILABLE", "CANCELLED", "DEADLINE_EXCEEDED"]
+                }
+        }
+    ], 
+    "HealthCheckConfig": {
+        "ServiceName": "%s"
+    }
+}`, roundrobin.Name, hello.Hi_ServiceDesc.ServiceName, healthCheckService)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(*addr, grpc.WithInsecure(), grpc.WithDefaultServiceConfig(serverConfig))
 	if err != nil {
@@ -34,7 +53,7 @@ func main() {
 	defer conn.Close()
 	client := hello.NewHiClient(conn)
 	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 	r, err := client.SayHello(ctx, &hello.HiUser{Name: *name})
 	if err != nil {
