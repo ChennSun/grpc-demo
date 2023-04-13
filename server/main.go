@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"hello"
 	"log"
 	"net"
 )
+
+const healthCheckService = "grpc.health.v1.Health"
 
 type server struct {
 	hello.UnimplementedHiServer
@@ -28,6 +32,11 @@ func main() {
 	// 注册grpc服务
 	s := grpc.NewServer()
 	hello.RegisterHiServer(s, &server{})
+	// 注册健康检查服务
+	h := health.NewServer()
+	h.SetServingStatus(healthCheckService, grpc_health_v1.HealthCheckResponse_SERVING)
+	grpc_health_v1.RegisterHealthServer(s, h)
+
 	log.Printf("server listening at %v", l.Addr())
 	if err := s.Serve(l); err != nil {
 		log.Fatalf("failed to serve: %v", err)
