@@ -34,6 +34,7 @@ func main() {
 	hello.RegisterHiServer(s, &server{})
 	// 注册健康检查服务
 	h := health.NewServer()
+	// 可以修改对应服务的状态
 	h.SetServingStatus(healthCheckService, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_health_v1.RegisterHealthServer(s, h)
 
