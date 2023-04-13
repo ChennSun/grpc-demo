@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"hello"
 	"log"
 	"time"
@@ -40,4 +41,19 @@ func main() {
 		log.Fatalf("could not greet: %v", err)
 	}
 	log.Printf("Greeting: %s", r.GetUser())
+	// 健康检查
+	go func() {
+		cli := grpc_health_v1.NewHealthClient(conn)
+		// 传入的Service必须和SetServingStatus方法的服务名一致，服务名查询不到会抛error
+		res, _ := cli.Watch(context.TODO(), &grpc_health_v1.HealthCheckRequest{
+			Service: healthCheckService,
+		})
+		for {
+			r, _ := res.Recv()
+			if r == nil {
+				continue
+			}
+			fmt.Println(r)
+		}
+	}()
 }
