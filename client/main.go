@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"google.golang.org/grpc/balancer/roundrobin"
+	_ "google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"hello"
 	"log"
